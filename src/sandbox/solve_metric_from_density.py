@@ -276,7 +276,7 @@ def save_plot(xs, ys, density, phi, acceleration_x, acceleration_y, effective_t0
         width=0.003,
     )
 
-    output = Path(__file__).with_name("weak_field_metric_from_density.png")
+    output = Path(__file__).resolve().parents[1] / "assets" / "images" / "weak_field_metric_from_density.png"
     fig.savefig(output, dpi=160)
     plt.close(fig)
     return output

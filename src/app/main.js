@@ -1,4 +1,4 @@
-import "./style.css";
+import "../styles/style.css";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -8,7 +8,7 @@ document.querySelector("#app").innerHTML = `
   <div id="ui">
     <div class="uiHeader">
       <p class="uiKicker">Curvature Control Deck</p>
-      <h1>Spacetime Trajectory Console</h1>
+      <h1>Spacetime trajectory console</h1>
       <p>Bend the field, plot the path, and reach the UFO.</p>
     </div>
     <div class="labReadouts" aria-label="Simulation readouts">
@@ -347,7 +347,7 @@ const ui = {
   scene: canvas,
 };
 
-const robotAvatarUrl = new URL("./robot-clean.png", import.meta.url).href;
+const robotAvatarUrl = new URL("../assets/images/robot-clean.png", import.meta.url).href;
 if (ui.robotAvatar) {
   ui.robotAvatar.src = robotAvatarUrl;
 }
@@ -356,11 +356,11 @@ if (ui.tutorialRobotAvatar) {
 }
 
 const audioControl = {
-  iconOnUrl: new URL("./speaker-high-volume_1f50a.png", import.meta.url).href,
-  iconOffUrl: new URL("./muted-speaker_1f507.png", import.meta.url).href,
-  track: new Audio(new URL("./lofi_hour-sleepy-cat-118974.mp3", import.meta.url).href),
-  winSfxUrl: new URL("./universfield-level-up-05-326133.mp3", import.meta.url).href,
-  starSfxUrl: new URL("./benkirb-shine-8-268901.mp3", import.meta.url).href,
+  iconOnUrl: new URL("../assets/images/speaker-high-volume_1f50a.png", import.meta.url).href,
+  iconOffUrl: new URL("../assets/images/muted-speaker_1f507.png", import.meta.url).href,
+  track: new Audio(new URL("../assets/audio/lofi_hour-sleepy-cat-118974.mp3", import.meta.url).href),
+  winSfxUrl: new URL("../assets/audio/universfield-level-up-05-326133.mp3", import.meta.url).href,
+  starSfxUrl: new URL("../assets/audio/benkirb-shine-8-268901.mp3", import.meta.url).href,
   isEnabled: false,
   activeSfx: new Set(),
 };
@@ -491,7 +491,7 @@ const robotSpeechState = {
   visible: false,
 };
 
-const einsteinStudyPageUrl = new URL("./einstein-equation-study.html", import.meta.url).href;
+const einsteinStudyPageUrl = `${import.meta.env.BASE_URL}src/study/einstein-equation-study.html`;
 
 function pickRandomMessage(kind) {
   const pool = robotSpeechPools[kind] || [];
@@ -852,7 +852,7 @@ function refreshGateModels() {
 }
 
 gltfLoader.load(
-  new URL("./Star.glb", import.meta.url).href,
+  new URL("../assets/models/Star.glb", import.meta.url).href,
   (gltf) => {
     starModel = gltf.scene;
     refreshGateModels();
@@ -864,7 +864,7 @@ gltfLoader.load(
 );
 
 gltfLoader.load(
-  new URL("./Flying_Object.glb", import.meta.url).href,
+  new URL("../assets/models/Flying_Object.glb", import.meta.url).href,
   (gltf) => {
     setTutorialModelIcon("ufo", gltf.scene, { scale: 0.56, rotationX: Math.PI * 0.5 });
   },
@@ -875,7 +875,7 @@ gltfLoader.load(
 );
 
 gltfLoader.load(
-  new URL("./Purple_Alien.glb", import.meta.url).href,
+  new URL("../assets/models/Purple_Alien.glb", import.meta.url).href,
   (gltf) => {
     particleMesh.clear();
     const alienModel = gltf.scene;
@@ -905,7 +905,7 @@ gltfLoader.load(
 );
 
 gltfLoader.load(
-  new URL("./red-map-marker-icon-2709.glb", import.meta.url).href,
+  new URL("../assets/models/red-map-marker-icon-2709.glb", import.meta.url).href,
   (gltf) => {
     launchMesh.clear();
     const markerModel = gltf.scene;
@@ -1674,7 +1674,7 @@ function configureLevel(index) {
   targetMesh.userData.halo = targetHalo;
   targetMesh.add(targetHalo);
   gltfLoader.load(
-    new URL("./Flying_Object.glb", import.meta.url).href,
+    new URL("../assets/models/Flying_Object.glb", import.meta.url).href,
     (gltf) => {
       const targetModel = gltf.scene;
       targetModel.scale.set(0.5, 0.5, 0.5);

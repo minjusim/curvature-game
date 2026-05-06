@@ -679,7 +679,7 @@
       <div class="brand">Einstein Field Equation</div>
       <div class="navtools">
         <nav class="navlinks" aria-label="Study sections">
-          <a href="../" data-section="game" data-en="Game" data-ko="게임">Game</a>
+          <a href="../../" data-section="game" data-en="Game" data-ko="게임">Game</a>
           <a href="#contents" data-section="contents" data-en="Contents" data-ko="목차">Contents</a>
           <a href="#efe" data-section="efe" data-en="EFE" data-ko="EFE">EFE</a>
           <a href="#geometry" data-section="geometry" data-en="Geometry" data-ko="기하">Geometry</a>
@@ -1085,7 +1085,7 @@
               <svg class="trajectory-curve" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
                 <path d="M 10 72 C 28 66 38 60 46 58 C 55 56 57 48 65 41 C 74 33 83 28 90 23"></path>
               </svg>
-              <img class="ally-visual" src="./alien-monster_1f47e.png" alt="">
+              <img class="ally-visual" src="../assets/images/alien-monster_1f47e.png" alt="">
             </div>
             <p class="caption">
               The warped grid is not a live metric solver. It is a height proxy generated from the mass layout,
@@ -1205,7 +1205,7 @@ state.particle.y += state.particle.vy * dt;</code></pre>
       </section>
 
       <footer class="footer">
-        <a href="../">Back to the game</a>
+        <a href="../../">Back to the game</a>
       </footer>
     </main>
 
@@ -1595,7 +1595,7 @@ state.particle.y += state.particle.vy * dt;</code></pre>
               <svg class="trajectory-curve" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
                 <path d="M 10 72 C 28 66 38 60 46 58 C 55 56 57 48 65 41 C 74 33 83 28 90 23"></path>
               </svg>
-              <img class="ally-visual" src="./alien-monster_1f47e.png" alt="">
+              <img class="ally-visual" src="../assets/images/alien-monster_1f47e.png" alt="">
             </div>
             <p class="caption">
               게임의 warped grid는 실제 metric solver가 아니라, mass 배치에서 만든 height proxy입니다.
@@ -1714,7 +1714,7 @@ state.particle.y += state.particle.vy * dt;</code></pre>
       </section>
 
       <footer class="footer">
-        <a href="../">게임으로 돌아가기</a>
+        <a href="../../">게임으로 돌아가기</a>
       </footer>
     </main>
     <script>
@@ -1737,7 +1737,7 @@ state.particle.y += state.particle.vy * dt;</code></pre>
         navLinks.forEach((link) => {
           const section = link.dataset.section;
           link.textContent = link.dataset[language];
-          link.setAttribute("href", section === "game" ? "../" : `#${section}${isKorean ? "-ko" : ""}`);
+          link.setAttribute("href", section === "game" ? "../../" : `#${section}${isKorean ? "-ko" : ""}`);
         });
 
         document.documentElement.lang = language;
