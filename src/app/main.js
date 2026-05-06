@@ -1004,6 +1004,8 @@ trailLine.renderOrder = 110;
 scene.add(trailLine);
 
 const SAVED_PLAYS_STORAGE_KEY = "einsteinEquationSavedPlays";
+const LEADERBOARD_API_URL = import.meta.env.VITE_LEADERBOARD_API_URL?.trim() || "";
+const LEADERBOARD_REFRESH_MS = 45_000;
 const MAX_VISIBLE_SAVED_PLAYS = 50;
 const NICKNAME_MAX_LENGTH = 18;
 
@@ -1018,6 +1020,9 @@ const state = {
   runStartedAt: null,
   runFinishedAt: null,
   completedRun: null,
+  savedPlays: readLocalSavedPlays(),
+  isLeaderboardLoading: Boolean(LEADERBOARD_API_URL),
+  leaderboardError: "",
   attemptsInLevel: 0,
   flightTime: 0,
   isFlying: false,
@@ -1194,7 +1199,7 @@ function sanitizeSavedPlay(play) {
   };
 }
 
-function loadSavedPlays() {
+function readLocalSavedPlays() {
   try {
     const raw = localStorage.getItem(SAVED_PLAYS_STORAGE_KEY);
     if (!raw) return [];
@@ -1206,12 +1211,106 @@ function loadSavedPlays() {
   }
 }
 
-function saveSavedPlays(plays) {
+function writeLocalSavedPlays(plays) {
   try {
     localStorage.setItem(SAVED_PLAYS_STORAGE_KEY, JSON.stringify(plays.sort(compareSavedPlays)));
     return true;
   } catch {
     return false;
+  }
+}
+
+function setSavedPlays(plays, { cache = true } = {}) {
+  const sanitized = plays.map(sanitizeSavedPlay).filter(Boolean).sort(compareSavedPlays).slice(0, MAX_VISIBLE_SAVED_PLAYS);
+  state.savedPlays = sanitized;
+  if (!cache) return true;
+  return writeLocalSavedPlays([...sanitized]);
+}
+
+function loadSavedPlays() {
+  return [...state.savedPlays].sort(compareSavedPlays);
+}
+
+function saveSavedPlays(plays) {
+  return setSavedPlays(plays);
+}
+
+function getLeaderboardRequestUrl(action) {
+  try {
+    const url = new URL(LEADERBOARD_API_URL, window.location.href);
+    if (action) url.searchParams.set("action", action);
+    return url.toString();
+  } catch {
+    if (!action) return LEADERBOARD_API_URL;
+    const separator = LEADERBOARD_API_URL.includes("?") ? "&" : "?";
+    return `${LEADERBOARD_API_URL}${separator}action=${encodeURIComponent(action)}`;
+  }
+}
+
+function parseLeaderboardResponse(data) {
+  const rawPlays = Array.isArray(data) ? data : data?.plays;
+  if (!Array.isArray(rawPlays)) return [];
+  return rawPlays.map(sanitizeSavedPlay).filter(Boolean).sort(compareSavedPlays).slice(0, MAX_VISIBLE_SAVED_PLAYS);
+}
+
+async function readLeaderboardJson(response) {
+  const data = await response.json();
+  if (!response.ok || data?.ok === false) {
+    throw new Error(data?.error || `Leaderboard request failed with ${response.status}`);
+  }
+  return data;
+}
+
+async function fetchSharedSavedPlays() {
+  const response = await fetch(getLeaderboardRequestUrl("list"), {
+    method: "GET",
+    cache: "no-store",
+  });
+  return parseLeaderboardResponse(await readLeaderboardJson(response));
+}
+
+async function postSharedSavedPlay(play) {
+  const response = await fetch(getLeaderboardRequestUrl("save"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify({ action: "save", play }),
+  });
+  const data = await readLeaderboardJson(response);
+  return {
+    play: sanitizeSavedPlay(data?.play) || sanitizeSavedPlay(play),
+    plays: parseLeaderboardResponse(data),
+  };
+}
+
+async function refreshLeaderboard({ silent = false } = {}) {
+  if (!LEADERBOARD_API_URL) {
+    state.isLeaderboardLoading = false;
+    state.leaderboardError = "";
+    return loadSavedPlays();
+  }
+
+  if (!silent) {
+    state.isLeaderboardLoading = true;
+    state.leaderboardError = "";
+    renderRankingHud();
+    renderSavedPlays();
+  }
+
+  try {
+    const plays = await fetchSharedSavedPlays();
+    setSavedPlays(plays);
+    state.leaderboardError = "";
+    return plays;
+  } catch {
+    state.leaderboardError = "Shared rankings are offline. Showing cached records.";
+    return loadSavedPlays();
+  } finally {
+    state.isLeaderboardLoading = false;
+    renderRankingHud();
+    renderSavedPlays();
+    updateRecordRunFormState();
   }
 }
 
@@ -1236,7 +1335,13 @@ function renderSavedPlays(highlightId = state.completedRun?.savedId || null) {
   if (plays.length === 0) {
     const emptyItem = document.createElement("li");
     emptyItem.className = "leaderboardEmpty";
-    emptyItem.textContent = "No saved plays yet.";
+    if (state.isLeaderboardLoading && LEADERBOARD_API_URL) {
+      emptyItem.textContent = "Loading shared rankings...";
+    } else if (state.leaderboardError) {
+      emptyItem.textContent = state.leaderboardError;
+    } else {
+      emptyItem.textContent = LEADERBOARD_API_URL ? "No shared plays yet." : "No saved plays yet.";
+    }
     ui.leaderboardList.append(emptyItem);
     return;
   }
@@ -1270,6 +1375,7 @@ function renderSavedPlays(highlightId = state.completedRun?.savedId || null) {
 function renderRankingHud() {
   if (!ui.rankingHudList) return;
   const plays = loadSavedPlays().slice(0, 5);
+  const isLoadingEmpty = state.isLeaderboardLoading && LEADERBOARD_API_URL && plays.length === 0;
   ui.rankingHudList.textContent = "";
 
   for (let index = 0; index < 5; index += 1) {
@@ -1284,11 +1390,11 @@ function renderRankingHud() {
 
     const name = document.createElement("strong");
     name.className = "rankingHudName";
-    name.textContent = play ? play.nickname : "No record";
+    name.textContent = play ? play.nickname : isLoadingEmpty && index === 0 ? "Loading" : "No record";
 
     const meta = document.createElement("span");
     meta.className = "rankingHudMeta";
-    meta.textContent = play ? `${play.stars} / ${formatPlayTime(play.playTimeMs)}` : "--";
+    meta.textContent = play ? `${play.stars} / ${formatPlayTime(play.playTimeMs)}` : isLoadingEmpty && index === 0 ? "..." : "--";
 
     item.append(rank, name, meta);
     ui.rankingHudList.append(item);
@@ -1370,7 +1476,7 @@ function completeCurrentRun() {
   return state.completedRun;
 }
 
-function saveCompletedRun(event) {
+async function saveCompletedRun(event) {
   event.preventDefault();
   const run = state.completedRun || completeCurrentRun();
   if (run.savedId) {
@@ -1392,12 +1498,49 @@ function saveCompletedRun(event) {
     playTimeMs: run.playTimeMs,
     completedAt: run.completedAt,
   };
+
+  if (ui.nicknameInput) ui.nicknameInput.disabled = true;
+  if (ui.saveRun) ui.saveRun.disabled = true;
+  setRecordRunMessage(LEADERBOARD_API_URL ? "Recording shared score..." : "Recording score...");
+
+  if (LEADERBOARD_API_URL) {
+    try {
+      const result = await postSharedSavedPlay(savedPlay);
+      const sharedPlay = result.play || savedPlay;
+      setSavedPlays(result.plays.length > 0 ? result.plays : [...loadSavedPlays(), sharedPlay]);
+      state.leaderboardError = "";
+      run.savedId = sharedPlay.id;
+      run.nickname = sharedPlay.nickname;
+      renderSavedPlays(sharedPlay.id);
+      renderRankingHud();
+      updateRecordRunFormState();
+
+      const rank = getSavedPlayRank(sharedPlay.id);
+      if (rank > 0) {
+        setRecordRunMessage(`Recorded as ${sharedPlay.nickname}. Shared rank #${rank}.`);
+      } else {
+        setRecordRunMessage(`Recorded as ${sharedPlay.nickname}. Outside the visible Top ${MAX_VISIBLE_SAVED_PLAYS}.`);
+      }
+      return;
+    } catch {
+      state.leaderboardError = "Shared rankings are offline. Try recording again in a moment.";
+      renderSavedPlays();
+      renderRankingHud();
+      if (ui.nicknameInput) ui.nicknameInput.disabled = false;
+      if (ui.saveRun) ui.saveRun.disabled = false;
+      setRecordRunMessage(state.leaderboardError);
+      return;
+    }
+  }
+
   const plays = loadSavedPlays();
   plays.push(savedPlay);
   plays.sort(compareSavedPlays);
 
   if (!saveSavedPlays(plays)) {
     setRecordRunMessage("This browser could not save the play.");
+    if (ui.nicknameInput) ui.nicknameInput.disabled = false;
+    if (ui.saveRun) ui.saveRun.disabled = false;
     return;
   }
 
@@ -1437,6 +1580,9 @@ function openEndgameOverlay() {
   updateEndgameSummary(run);
   updateRecordRunFormState();
   renderSavedPlays(run.savedId);
+  if (LEADERBOARD_API_URL) {
+    refreshLeaderboard({ silent: true });
+  }
   ui.endgameOverlay.classList.remove("is-hidden");
   ui.endgameOverlay.setAttribute("aria-hidden", "false");
   ui.robotHud.classList.add("overlay-mode");
@@ -2208,6 +2354,7 @@ function attachControls() {
   });
   window.addEventListener("storage", (e) => {
     if (e.key === SAVED_PLAYS_STORAGE_KEY) {
+      setSavedPlays(readLocalSavedPlays(), { cache: false });
       renderRankingHud();
       renderSavedPlays();
       updateRecordRunFormState();
@@ -2246,6 +2393,10 @@ attachTutorialControls();
 configureLevel(0);
 updateAimVisuals();
 renderRankingHud();
+refreshLeaderboard();
+if (LEADERBOARD_API_URL) {
+  window.setInterval(() => refreshLeaderboard({ silent: true }), LEADERBOARD_REFRESH_MS);
+}
 
 // Show tutorial on every page load so refresh always starts from the beginning.
 showTutorial();
