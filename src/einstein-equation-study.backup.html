@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einstein Field Equation Study</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: #1f2933;
+        background:
+          linear-gradient(90deg, rgba(17, 48, 82, 0.035) 1px, transparent 1px),
+          linear-gradient(#f7f4ed 0%, #fbfaf6 52%, #f2f5f7 100%);
+        background-size: 72px 100%, auto;
+        font-family: "Source Sans 3", Inter, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+        line-height: 1.65;
+      }
+
+      body.dark-mode {
+        color: #e8edf2;
+        background:
+          linear-gradient(90deg, rgba(224, 231, 238, 0.035) 1px, transparent 1px),
+          linear-gradient(#111823 0%, #151f2b 52%, #0d141d 100%);
+        background-size: 72px 100%, auto;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 14px clamp(18px, 5vw, 56px);
+        border-bottom: 1px solid #d8d3c7;
+        background: rgba(250, 248, 242, 0.9);
+        backdrop-filter: blur(12px);
+      }
+
+      .brand {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: #132238;
+      }
+
+      .navlinks {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .navtools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .navlinks a {
+        padding: 7px 10px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #44515f;
+        font-size: 0.84rem;
+        text-decoration: none;
+        background: transparent;
+      }
+
+      .navlinks a:hover {
+        border-color: #c8beb0;
+        background: #f1ede4;
+      }
+
+      .theme-toggle {
+        min-height: 32px;
+        border: 1px solid #c8beb0;
+        border-radius: 999px;
+        background: #f8f4eb;
+        color: #263440;
+        padding: 5px 11px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+
+      .theme-toggle:hover {
+        background: #ebe4d8;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .hero {
+        min-height: 78vh;
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
+        align-items: center;
+        gap: clamp(28px, 5vw, 64px);
+        padding: clamp(56px, 10vw, 108px) 0 58px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: #8b3f35;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 20px;
+        color: #101820;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.45rem, 6.5vw, 5.35rem);
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 720px;
+        margin: 0;
+        color: #4b5863;
+        font-size: clamp(1rem, 2.1vw, 1.28rem);
+      }
+
+      .equation-panel {
+        position: relative;
+        overflow: hidden;
+        padding: 30px;
+        border: 1px solid #d2c7b8;
+        border-radius: 6px;
+        background: rgba(255, 253, 248, 0.74);
+        box-shadow: 0 18px 46px rgba(38, 42, 48, 0.08);
+      }
+
+      .equation {
+        position: relative;
+        margin: 0 0 22px;
+        color: #132238;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.55rem, 5vw, 3rem);
+        line-height: 1.25;
+      }
+
+      .reading-key {
+        position: relative;
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .reading-key li {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 12px;
+        align-items: baseline;
+        color: #4b5863;
+        font-size: 0.95rem;
+      }
+
+      .symbol {
+        color: #245a7d;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.18rem;
+        font-weight: 700;
+      }
+
+      section {
+        padding: 58px 0;
+        border-top: 1px solid #ded8cc;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+        gap: clamp(20px, 5vw, 52px);
+        margin-bottom: 28px;
+      }
+
+      h2 {
+        margin: 0;
+        color: #132238;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.65rem, 4vw, 2.85rem);
+        font-weight: 500;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .section-head p,
+      .plain-text {
+        margin: 0;
+        color: #4b5863;
+        font-size: 1.02rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .two-col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 18px 18px 20px;
+        border: 1px solid #ddd4c6;
+        border-radius: 6px;
+        background: rgba(255, 253, 248, 0.7);
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        color: #182635;
+        font-size: 1rem;
+      }
+
+      .card p {
+        margin: 0;
+        color: #4f5d68;
+      }
+
+      .math {
+        display: block;
+        margin-bottom: 10px;
+        color: #8b3f35;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.35rem;
+        line-height: 1.3;
+      }
+
+      .story {
+        display: grid;
+        gap: 16px;
+        max-width: 880px;
+      }
+
+      .story-step {
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .step-num {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid #b8ab9d;
+        border-radius: 50%;
+        color: #8b3f35;
+        font-weight: 800;
+        background: #f8f4eb;
+      }
+
+      .story-step h3 {
+        margin: 0 0 5px;
+        color: #182635;
+      }
+
+      .story-step p {
+        margin: 0;
+        color: #4f5d68;
+      }
+
+      .mapping {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid #d8d0c3;
+        border-radius: 6px;
+        background: rgba(255, 253, 248, 0.76);
+      }
+
+      .mapping th,
+      .mapping td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e3ddd3;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .mapping th {
+        color: #5d302c;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: #f1eadf;
+      }
+
+      .mapping td {
+        color: #3f4c56;
+      }
+
+      .mapping tr:last-child td {
+        border-bottom: 0;
+      }
+
+      code {
+        color: #7a372f;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.95em;
+      }
+
+      .callout {
+        margin-top: 18px;
+        padding: 18px 20px;
+        border-left: 3px solid #245a7d;
+        border-radius: 4px;
+        background: #eef3f5;
+        color: #34424f;
+      }
+
+      .visual {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .diagram {
+        position: relative;
+        min-height: 310px;
+        overflow: hidden;
+        border: 1px solid #d8d0c3;
+        border-radius: 6px;
+        background:
+          radial-gradient(circle at 45% 44%, rgba(139, 63, 53, 0.16), transparent 11%),
+          radial-gradient(circle at 45% 44%, rgba(36, 90, 125, 0.08), transparent 25%),
+          linear-gradient(rgba(19, 34, 56, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(19, 34, 56, 0.08) 1px, transparent 1px),
+          #fbf8f1;
+        background-size: auto, auto, 26px 26px, 26px 26px, auto;
+      }
+
+      .diagram::before {
+        content: "";
+        position: absolute;
+        left: 9%;
+        right: 9%;
+        top: 52%;
+        height: 2px;
+        background: #245a7d;
+        transform: rotate(-16deg);
+      }
+
+      .diagram::after {
+        content: "";
+        position: absolute;
+        width: 56px;
+        height: 56px;
+        left: calc(45% - 28px);
+        top: calc(44% - 28px);
+        border-radius: 50%;
+        background: #8b3f35;
+        box-shadow: 0 0 0 10px rgba(139, 63, 53, 0.08);
+      }
+
+      .ally-visual {
+        position: absolute;
+        left: 13%;
+        top: 43%;
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        filter: drop-shadow(0 7px 9px rgba(31, 41, 51, 0.22));
+        transform: rotate(-16deg);
+      }
+
+      .caption {
+        margin: 10px 0 0;
+        color: #697681;
+        font-size: 0.92rem;
+      }
+
+      .footer {
+        padding: 42px 0 70px;
+        color: #697681;
+        text-align: center;
+      }
+
+      .footer a {
+        color: #245a7d;
+        text-decoration: none;
+      }
+
+      body.dark-mode .topbar {
+        border-bottom-color: #2b3948;
+        background: rgba(15, 22, 32, 0.9);
+      }
+
+      body.dark-mode .brand,
+      body.dark-mode h1,
+      body.dark-mode h2,
+      body.dark-mode .equation,
+      body.dark-mode .card h3,
+      body.dark-mode .story-step h3 {
+        color: #f5f1e8;
+      }
+
+      body.dark-mode .navlinks a {
+        color: #c8d3dc;
+      }
+
+      body.dark-mode .navlinks a:hover {
+        border-color: #3b4d5f;
+        background: #1b2735;
+      }
+
+      body.dark-mode .theme-toggle {
+        border-color: #3b4d5f;
+        background: #1b2735;
+        color: #e8edf2;
+      }
+
+      body.dark-mode .theme-toggle:hover {
+        background: #243446;
+      }
+
+      body.dark-mode .lead,
+      body.dark-mode .reading-key li,
+      body.dark-mode .section-head p,
+      body.dark-mode .plain-text,
+      body.dark-mode .card p,
+      body.dark-mode .story-step p,
+      body.dark-mode .mapping td {
+        color: #b9c5cf;
+      }
+
+      body.dark-mode .eyebrow,
+      body.dark-mode .math,
+      body.dark-mode code,
+      body.dark-mode .step-num,
+      body.dark-mode .footer a {
+        color: #d98f80;
+      }
+
+      body.dark-mode .symbol {
+        color: #83b8dc;
+      }
+
+      body.dark-mode section {
+        border-top-color: #2b3948;
+      }
+
+      body.dark-mode .equation-panel,
+      body.dark-mode .card,
+      body.dark-mode .mapping {
+        border-color: #334252;
+        background: rgba(19, 29, 42, 0.78);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.18);
+      }
+
+      body.dark-mode .step-num {
+        border-color: #4c5e70;
+        background: #172331;
+      }
+
+      body.dark-mode .mapping th {
+        color: #e0b2a9;
+        background: #1c2a38;
+      }
+
+      body.dark-mode .mapping th,
+      body.dark-mode .mapping td {
+        border-bottom-color: #2f3d4c;
+      }
+
+      body.dark-mode .callout {
+        border-left-color: #83b8dc;
+        background: #172536;
+        color: #c7d2dc;
+      }
+
+      body.dark-mode .diagram {
+        border-color: #334252;
+        background:
+          radial-gradient(circle at 45% 44%, rgba(217, 143, 128, 0.16), transparent 11%),
+          radial-gradient(circle at 45% 44%, rgba(131, 184, 220, 0.08), transparent 25%),
+          linear-gradient(rgba(232, 237, 242, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(232, 237, 242, 0.07) 1px, transparent 1px),
+          #121c28;
+        background-size: auto, auto, 26px 26px, 26px 26px, auto;
+      }
+
+      body.dark-mode .diagram::before {
+        background: #83b8dc;
+      }
+
+      body.dark-mode .diagram::after {
+        background: #d98f80;
+        box-shadow: 0 0 0 10px rgba(217, 143, 128, 0.08);
+      }
+
+      body.dark-mode .ally-visual {
+        filter: drop-shadow(0 7px 9px rgba(0, 0, 0, 0.34));
+      }
+
+      body.dark-mode .caption,
+      body.dark-mode .footer {
+        color: #9facb8;
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .section-head,
+        .visual {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+          padding-top: 46px;
+        }
+
+        .grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .navlinks {
+          justify-content: flex-start;
+        }
+
+        .navtools {
+          justify-content: flex-start;
+        }
+
+        .mapping {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media (max-width: 560px) {
+        main {
+          width: min(100% - 24px, 1120px);
+        }
+
+        .topbar {
+          padding: 12px;
+        }
+
+        .reading-key li,
+        .story-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">Einstein Field Equation</div>
+      <div class="navtools">
+        <nav class="navlinks" aria-label="Study sections">
+          <a href="../">Game</a>
+          <a href="#meaning">Meaning</a>
+          <a href="#game-map">Game Map</a>
+          <a href="#manifolds">Manifolds</a>
+          <a href="#curvature">Curvature</a>
+        </nav>
+        <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">From a puzzle game to spacetime geometry</p>
+          <h1>How matter tells geometry what to do</h1>
+          <p class="lead">
+            Einstein's field equation is compact, but it carries a graduate-level idea:
+            gravity is not a force painted onto space. It is the geometry of spacetime
+            responding to energy and momentum.
+          </p>
+        </div>
+
+        <aside class="equation-panel" aria-label="Einstein field equation components">
+          <p class="equation">G<sub>μν</sub> + Λg<sub>μν</sub> = (8πG / c<sup>4</sup>)T<sub>μν</sub></p>
+          <ul class="reading-key">
+            <li><span class="symbol">G<sub>μν</sub></span><span>curvature packaged as the Einstein tensor</span></li>
+            <li><span class="symbol">Λg<sub>μν</sub></span><span>a uniform background tendency of spacetime itself</span></li>
+            <li><span class="symbol">T<sub>μν</sub></span><span>energy, momentum, pressure, and stress</span></li>
+            <li><span class="symbol">8πG/c<sup>4</sup></span><span>the conversion factor from physics units to geometry</span></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section id="meaning">
+        <div class="section-head">
+          <h2>1. What each component means</h2>
+          <p>
+            Read the equation from right to left: matter-energy appears on the right,
+            spacetime curvature appears on the left. The equality says they must fit
+            together at every event in spacetime.
+          </p>
+        </div>
+
+        <div class="grid">
+          <article class="card">
+            <span class="math">T<sub>μν</sub></span>
+            <h3>Stress-energy tensor</h3>
+            <p>
+              This is the source side. It includes energy density, momentum flow,
+              pressure, and shear stress. In ordinary language: what is present,
+              how it moves, and how it pushes.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">g<sub>μν</sub></span>
+            <h3>Metric tensor</h3>
+            <p>
+              The metric defines distances, times, angles, and causal structure.
+              Once you know the metric, you know what clocks and rulers mean locally.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">G<sub>μν</sub></span>
+            <h3>Einstein tensor</h3>
+            <p>
+              This is the curvature side arranged so that local energy-momentum is
+              conserved. It is built from the Ricci tensor and Ricci scalar.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">Λ</span>
+            <h3>Cosmological constant</h3>
+            <p>
+              Λ acts like a uniform energy density of spacetime. In cosmology it is
+              associated with accelerated expansion.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">G</span>
+            <h3>Newton's constant</h3>
+            <p>
+              This controls the strength of gravitational coupling. Larger G means
+              the same stress-energy produces more curvature.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">c</span>
+            <h3>Speed of light</h3>
+            <p>
+              The factor c<sup>4</sup> reminds us that relativity connects space,
+              time, mass, and energy through one geometric framework.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="game-map">
+        <div class="section-head">
+          <h2>2. How the game encodes the idea</h2>
+          <p>
+            The game is a toy model, not a numerical relativity simulation. It borrows
+            the intuition of curved geometry: massive objects deform the surface, and
+            Ally's path bends as if it is following that geometry.
+          </p>
+        </div>
+
+        <div class="visual">
+          <div>
+            <table class="mapping">
+              <thead>
+                <tr>
+                  <th>Game object or parameter</th>
+                  <th>Code idea</th>
+                  <th>GR analogy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Red/orange mass wells</td>
+                  <td><code>level.masses[].mass</code>, <code>radius</code></td>
+                  <td>Source terms, like simplified pieces of <code>Tμν</code></td>
+                </tr>
+                <tr>
+                  <td>Warped grid surface</td>
+                  <td><code>heightAt(x, y) = -zScale Σ mass / r</code></td>
+                  <td>A visual proxy for curvature of geometry</td>
+                </tr>
+                <tr>
+                  <td>Ally's bending trajectory</td>
+                  <td><code>particleAccel</code> pulls toward each mass well</td>
+                  <td>Motion responding to geometry, like geodesic intuition</td>
+                </tr>
+                <tr>
+                  <td><code>gravity</code> / <code>gParticle</code></td>
+                  <td>Controls acceleration strength</td>
+                  <td>Loose analogue of gravitational coupling</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="callout">
+              The most important limitation: in real general relativity, objects follow
+              geodesics in four-dimensional spacetime. In the game, Ally moves in a
+              two-dimensional plane with Newton-like acceleration and a decorative
+              warped surface. The analogy is conceptual, not exact.
+            </div>
+          </div>
+
+          <div>
+            <div class="diagram" aria-hidden="true">
+              <img class="ally-visual" src="./alien-monster_1f47e.png" alt="">
+            </div>
+            <p class="caption">
+              A mass well bends the visual grid; Ally's path bends nearby. This picture
+              is the bridge from the game intuition to spacetime geometry.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="manifolds">
+        <div class="section-head">
+          <h2>3. From Riemannian manifolds to relativity</h2>
+          <p>
+            Riemannian geometry teaches us how to do calculus on curved spaces.
+            Einstein's move was to make spacetime itself the curved object.
+          </p>
+        </div>
+
+        <div class="story">
+          <article class="story-step">
+            <div class="step-num">1</div>
+            <div>
+              <h3>A manifold is locally simple, globally flexible.</h3>
+              <p>
+                Near any point, a manifold looks like ordinary coordinate space, so we
+                can measure and differentiate. Globally, it can curve, twist, and have
+                nontrivial shape.
+              </p>
+            </div>
+          </article>
+          <article class="story-step">
+            <div class="step-num">2</div>
+            <div>
+              <h3>The metric turns coordinates into physics.</h3>
+              <p>
+                The metric tensor tells us lengths and angles. In relativity, it also
+                decides proper time and which events can causally influence which others.
+              </p>
+            </div>
+          </article>
+          <article class="story-step">
+            <div class="step-num">3</div>
+            <div>
+              <h3>Free motion becomes geodesic motion.</h3>
+              <p>
+                On a curved manifold, the straightest possible path is a geodesic.
+                Einstein interprets freely falling bodies as following spacetime
+                geodesics rather than being pulled by an invisible Newtonian force.
+              </p>
+            </div>
+          </article>
+          <article class="story-step">
+            <div class="step-num">4</div>
+            <div>
+              <h3>Matter does not live on geometry; it shapes geometry.</h3>
+              <p>
+                The field equation closes the loop: stress-energy determines curvature,
+                and curvature determines the natural paths matter and light follow.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="curvature">
+        <div class="section-head">
+          <h2>4. Ricci curvature and the Einstein tensor</h2>
+          <p>
+            Curvature has more information than one number can hold. The tensors below
+            are successive compressions of the full curvature story, each keeping the
+            part needed for the field equation.
+          </p>
+        </div>
+
+        <div class="grid two-col">
+          <article class="card">
+            <span class="math">R<sup>ρ</sup><sub>σμν</sub></span>
+            <h3>Riemann curvature tensor</h3>
+            <p>
+              The full curvature object. It measures how vectors change after being
+              parallel transported around tiny loops. It knows about tidal effects and
+              all local curvature directions.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">R<sub>μν</sub> = R<sup>ρ</sup><sub>μρν</sub></span>
+            <h3>Ricci tensor</h3>
+            <p>
+              A contraction of the Riemann tensor. It tracks how small volumes tend to
+              focus or defocus under geodesic flow, which is exactly the kind of
+              curvature matter directly sources in Einstein's equation.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">R = g<sup>μν</sup>R<sub>μν</sub></span>
+            <h3>Ricci scalar</h3>
+            <p>
+              A further contraction: one number summarizing average curvature at a
+              point. Useful, but too compressed to describe direction-dependent
+              gravitational behavior by itself.
+            </p>
+          </article>
+          <article class="card">
+            <span class="math">G<sub>μν</sub> = R<sub>μν</sub> - 1/2 Rg<sub>μν</sub></span>
+            <h3>Einstein tensor</h3>
+            <p>
+              The combination that fits the conservation law. Its divergence vanishes,
+              matching the local conservation of stress-energy:
+              ∇<sup>μ</sup>T<sub>μν</sub> = 0.
+            </p>
+          </article>
+        </div>
+
+        <div class="callout">
+          A good mental order is: metric → connection → Riemann curvature → Ricci tensor
+          → Ricci scalar → Einstein tensor. The field equation then says this final
+          curvature package is proportional to stress-energy.
+        </div>
+      </section>
+
+      <section id="wrap">
+        <div class="section-head">
+          <h2>5. The narrative in one breath</h2>
+          <p>
+            A Riemannian or pseudo-Riemannian manifold gives us a stage where geometry
+            can vary from point to point. The metric defines measurement. Curvature
+            describes how measurement changes. Matter and energy determine that
+            curvature. Then particles and light follow the geometry that results.
+          </p>
+        </div>
+
+        <p class="plain-text">
+          Your game turns that story into an interactive sketch: place mass wells,
+          bend the surface, adjust the launch direction, and watch Ally's path respond.
+          The real equation is deeper and four-dimensional, but the core intuition is
+          the same: gravity is geometry with consequences.
+        </p>
+      </section>
+
+      <footer class="footer">
+        <a href="../">Back to the game</a>
+      </footer>
+    </main>
+    <script>
+      const themeToggle = document.querySelector("#themeToggle");
+      const storedTheme = window.localStorage.getItem("einstein-study-theme");
+      const shouldUseDark = storedTheme ? storedTheme === "dark" : true;
+
+      function setTheme(isDark) {
+        document.body.classList.toggle("dark-mode", isDark);
+        themeToggle.textContent = isDark ? "Light" : "Dark";
+        themeToggle.setAttribute("aria-pressed", String(isDark));
+      }
+
+      setTheme(shouldUseDark);
+
+      themeToggle.addEventListener("click", () => {
+        const isDark = !document.body.classList.contains("dark-mode");
+        setTheme(isDark);
+        window.localStorage.setItem("einstein-study-theme", isDark ? "dark" : "light");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dreaming Spacetime Lab Prototype</title>
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --bg-soft: #0d1117;
+        --grid: #6fe7ff;
+        --teal: #3aa6b9;
+        --orange: #ff9e4a;
+        --magenta: #d16bff;
+        --lavender: #c8b6ff;
+        --ink: #ecfbff;
+        --muted: rgba(236, 251, 255, 0.62);
+        --panel: rgba(7, 11, 19, 0.58);
+        --panel-strong: rgba(13, 17, 23, 0.76);
+        --line: rgba(111, 231, 255, 0.22);
+        --line-hot: rgba(111, 231, 255, 0.64);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          "Liberation Mono",
+          "Courier New",
+          monospace;
+        letter-spacing: 0;
+        overflow: hidden;
+      }
+
+      body {
+        min-width: 320px;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      #labCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        background: var(--bg);
+      }
+
+      .lab-shell {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: minmax(220px, 280px) 1fr minmax(210px, 260px);
+        grid-template-rows: auto 1fr auto;
+        gap: 16px;
+        padding: 18px;
+        pointer-events: none;
+      }
+
+      .top-rail,
+      .panel,
+      .bottom-console {
+        pointer-events: auto;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgba(111, 231, 255, 0.08), rgba(209, 107, 255, 0.035)),
+          var(--panel);
+        box-shadow:
+          0 0 26px rgba(111, 231, 255, 0.08),
+          inset 0 0 28px rgba(200, 182, 255, 0.035);
+        backdrop-filter: blur(14px);
+      }
+
+      .top-rail {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        min-height: 76px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .top-rail::before,
+      .panel::before,
+      .bottom-console::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          repeating-linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.035) 0,
+            rgba(255, 255, 255, 0.035) 1px,
+            transparent 1px,
+            transparent 6px
+          );
+        opacity: 0.32;
+        mix-blend-mode: screen;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .kicker {
+        margin: 0 0 6px;
+        color: var(--orange);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        color: #f4fdff;
+        font-size: 1.45rem;
+        font-weight: 700;
+        line-height: 1.08;
+        text-shadow: 0 0 16px rgba(111, 231, 255, 0.62);
+      }
+
+      .rail-readouts {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .chip {
+        min-width: 96px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 158, 74, 0.28);
+        background: rgba(255, 158, 74, 0.055);
+        color: rgba(255, 247, 238, 0.86);
+        border-radius: 6px;
+        text-align: right;
+      }
+
+      .chip span {
+        display: block;
+        margin-bottom: 3px;
+        color: rgba(255, 158, 74, 0.72);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+      }
+
+      .chip strong {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .panel {
+        position: relative;
+        align-self: start;
+        border-radius: 8px;
+        padding: 14px;
+        overflow: hidden;
+      }
+
+      .left-panel {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .right-panel {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .panel-title {
+        margin: 0 0 14px;
+        color: rgba(236, 251, 255, 0.9);
+        font-size: 0.84rem;
+        text-transform: uppercase;
+      }
+
+      .readout-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .readout-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: baseline;
+        padding-bottom: 9px;
+        border-bottom: 1px solid rgba(111, 231, 255, 0.13);
+      }
+
+      .readout-row span {
+        min-width: 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      .readout-row strong {
+        color: var(--grid);
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-shadow: 0 0 12px rgba(111, 231, 255, 0.56);
+        white-space: nowrap;
+      }
+
+      .control-bank {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .control-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .control-label {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: rgba(236, 251, 255, 0.72);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--grid);
+      }
+
+      .toggle-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .toggle {
+        min-height: 38px;
+        border: 1px solid rgba(111, 231, 255, 0.24);
+        border-radius: 6px;
+        background: rgba(111, 231, 255, 0.055);
+        color: rgba(236, 251, 255, 0.78);
+        cursor: pointer;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease,
+          color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .toggle.is-active {
+        border-color: rgba(111, 231, 255, 0.72);
+        background: rgba(111, 231, 255, 0.14);
+        color: #f7feff;
+        box-shadow: 0 0 16px rgba(111, 231, 255, 0.18);
+      }
+
+      .toggle:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 3px;
+      }
+
+      .scope {
+        position: relative;
+        height: 132px;
+        margin-top: 4px;
+        border: 1px solid rgba(209, 107, 255, 0.25);
+        border-radius: 6px;
+        background:
+          linear-gradient(rgba(111, 231, 255, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 231, 255, 0.08) 1px, transparent 1px),
+          rgba(209, 107, 255, 0.035);
+        background-size: 18px 18px;
+        overflow: hidden;
+      }
+
+      .scope::after {
+        content: "";
+        position: absolute;
+        inset: 18% 12%;
+        border: 1px solid rgba(255, 158, 74, 0.4);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px rgba(255, 158, 74, 0.18),
+          inset 0 0 22px rgba(209, 107, 255, 0.15);
+      }
+
+      .scope-line {
+        position: absolute;
+        left: -18%;
+        right: -18%;
+        top: 50%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--orange), var(--magenta), transparent);
+        box-shadow: 0 0 16px rgba(255, 158, 74, 0.55);
+        transform-origin: center;
+        animation: sweep 5.5s ease-in-out infinite;
+      }
+
+      .scope-dot {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--grid);
+        box-shadow: 0 0 18px rgba(111, 231, 255, 0.86);
+        animation: driftDot 6.2s ease-in-out infinite;
+      }
+
+      .bottom-console {
+        position: relative;
+        grid-column: 2;
+        grid-row: 3;
+        align-self: end;
+        justify-self: center;
+        width: min(780px, 100%);
+        min-height: 88px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .signal-bars {
+        display: grid;
+        gap: 8px;
+      }
+
+      .meter {
+        display: grid;
+        grid-template-columns: 90px 1fr 52px;
+        gap: 10px;
+        align-items: center;
+        color: rgba(236, 251, 255, 0.7);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      .meter-track {
+        height: 7px;
+        overflow: hidden;
+        border: 1px solid rgba(111, 231, 255, 0.26);
+        border-radius: 999px;
+        background: rgba(236, 251, 255, 0.08);
+      }
+
+      .meter-fill {
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), var(--grid), var(--magenta));
+        box-shadow: 0 0 16px rgba(111, 231, 255, 0.5);
+        transform-origin: left center;
+      }
+
+      .console-badge {
+        min-width: 128px;
+        display: grid;
+        gap: 5px;
+        justify-items: end;
+        color: rgba(236, 251, 255, 0.74);
+      }
+
+      .console-badge strong {
+        color: var(--orange);
+        font-size: 1rem;
+        text-shadow: 0 0 14px rgba(255, 158, 74, 0.48);
+      }
+
+      .corner-mark {
+        position: fixed;
+        z-index: 3;
+        right: 18px;
+        bottom: 16px;
+        color: rgba(200, 182, 255, 0.42);
+        font-size: 0.68rem;
+        pointer-events: none;
+      }
+
+      .screen-vignette,
+      .scanline {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .screen-vignette {
+        background:
+          radial-gradient(circle at 50% 47%, transparent 0, transparent 48%, rgba(0, 0, 0, 0.54) 100%),
+          linear-gradient(180deg, rgba(209, 107, 255, 0.035), transparent 24%, rgba(255, 158, 74, 0.035));
+      }
+
+      .scanline {
+        background: linear-gradient(
+          180deg,
+          transparent 0,
+          rgba(255, 255, 255, 0.03) 48%,
+          transparent 100%
+        );
+        height: 120px;
+        animation: scan 8s linear infinite;
+        mix-blend-mode: screen;
+        opacity: 0.3;
+      }
+
+      @keyframes scan {
+        0% {
+          transform: translateY(-140px);
+        }
+        100% {
+          transform: translateY(100vh);
+        }
+      }
+
+      @keyframes sweep {
+        0%,
+        100% {
+          transform: rotate(-18deg) translateY(-14px);
+        }
+        50% {
+          transform: rotate(14deg) translateY(10px);
+        }
+      }
+
+      @keyframes driftDot {
+        0%,
+        100% {
+          left: 28%;
+          top: 31%;
+        }
+        45% {
+          left: 67%;
+          top: 58%;
+        }
+        70% {
+          left: 48%;
+          top: 42%;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .lab-shell {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: auto 1fr auto;
+          gap: 12px;
+          padding: 12px;
+        }
+
+        .top-rail {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .rail-readouts {
+          justify-content: flex-start;
+        }
+
+        .left-panel {
+          grid-column: 1;
+          grid-row: 2;
+          width: min(340px, 100%);
+        }
+
+        .right-panel {
+          display: none;
+        }
+
+        .bottom-console {
+          grid-column: 1;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .lab-shell {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 1.08rem;
+        }
+
+        .kicker,
+        .chip span,
+        .readout-row span,
+        .control-label,
+        .meter {
+          font-size: 0.66rem;
+        }
+
+        .chip {
+          min-width: 0;
+          flex: 1 1 92px;
+          text-align: left;
+        }
+
+        .left-panel {
+          display: none;
+        }
+
+        .bottom-console {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .meter {
+          grid-template-columns: 72px 1fr 44px;
+        }
+
+        .console-badge {
+          justify-items: start;
+        }
+
+        .corner-mark {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .scanline,
+        .scope-line,
+        .scope-dot {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Standalone design prototype.
+      This file intentionally does not import src/main.js or any current game code.
+    -->
+    <canvas id="labCanvas" aria-label="Dreaming spacetime lab visual prototype"></canvas>
+
+    <div class="screen-vignette" aria-hidden="true"></div>
+    <div class="scanline" aria-hidden="true"></div>
+
+    <main class="lab-shell" aria-label="Dreaming Spacetime Lab interface mockup">
+      <header class="top-rail">
+        <div class="brand">
+          <p class="kicker">Retro simulation chamber</p>
+          <h1>Dreaming Spacetime Lab</h1>
+        </div>
+        <div class="rail-readouts" aria-label="System readouts">
+          <div class="chip">
+            <span>Phase</span>
+            <strong id="phaseReadout">00.00</strong>
+          </div>
+          <div class="chip">
+            <span>Signal</span>
+            <strong id="signalReadout">steady</strong>
+          </div>
+          <div class="chip">
+            <span>Field</span>
+            <strong id="fieldReadout">0.68 c</strong>
+          </div>
+        </div>
+      </header>
+
+      <aside class="panel left-panel" aria-label="Field console">
+        <h2 class="panel-title">Field Console</h2>
+        <div class="readout-stack">
+          <div class="readout-row">
+            <span>Curvature</span>
+            <strong id="curveReadout">0.68</strong>
+          </div>
+          <div class="readout-row">
+            <span>Particle drift</span>
+            <strong id="driftReadout">calm</strong>
+          </div>
+          <div class="readout-row">
+            <span>Fog density</span>
+            <strong id="fogReadout">0.54</strong>
+          </div>
+        </div>
+
+        <div class="control-bank">
+          <label class="control-row">
+            <span class="control-label">
+              <span>Curvature</span>
+              <span id="curveControlValue">68%</span>
+            </span>
+            <input id="curveControl" type="range" min="0.2" max="1" value="0.68" step="0.01" />
+          </label>
+
+          <label class="control-row">
+            <span class="control-label">
+              <span>Particles</span>
+              <span id="particleControlValue">72%</span>
+            </span>
+            <input id="particleControl" type="range" min="0.2" max="1" value="0.72" step="0.01" />
+          </label>
+        </div>
+
+        <div class="toggle-grid" aria-label="Visual layer toggles">
+          <button class="toggle is-active" type="button" data-toggle="grid" aria-pressed="true">Grid</button>
+          <button class="toggle is-active" type="button" data-toggle="trail" aria-pressed="true">Trail</button>
+          <button class="toggle is-active" type="button" data-toggle="fog" aria-pressed="true">Fog</button>
+          <button class="toggle is-active" type="button" data-toggle="bloom" aria-pressed="true">Bloom</button>
+        </div>
+      </aside>
+
+      <aside class="panel right-panel" aria-label="Geodesic trace monitor">
+        <h2 class="panel-title">Geodesic Trace</h2>
+        <div class="scope" aria-hidden="true">
+          <div class="scope-line"></div>
+          <div class="scope-dot"></div>
+        </div>
+        <div class="readout-stack" style="margin-top: 14px">
+          <div class="readout-row">
+            <span>Trail phase</span>
+            <strong id="trailReadout">orange</strong>
+          </div>
+          <div class="readout-row">
+            <span>Lens pulse</span>
+            <strong id="pulseReadout">0.00</strong>
+          </div>
+          <div class="readout-row">
+            <span>Lab mood</span>
+            <strong>surreal</strong>
+          </div>
+        </div>
+      </aside>
+
+      <section class="bottom-console" aria-label="Atmosphere console">
+        <div class="signal-bars">
+          <div class="meter">
+            <span>Glow</span>
+            <div class="meter-track"><div class="meter-fill" id="glowMeter"></div></div>
+            <strong id="glowReadout">58%</strong>
+          </div>
+          <div class="meter">
+            <span>Drift</span>
+            <div class="meter-track"><div class="meter-fill" id="driftMeter"></div></div>
+            <strong id="driftMeterReadout">41%</strong>
+          </div>
+        </div>
+        <div class="console-badge">
+          <span>Palette lock</span>
+          <strong>cyan / orange / magenta</strong>
+        </div>
+      </section>
+    </main>
+
+    <div class="corner-mark">design_prototype.html</div>
+
+    <script>
+      /*
+        Main game integration notes for later:
+        - This prototype is a visual reference only. It does not import or modify src/main.js.
+        - drawSpacetimeGrid() maps to the glowing field/grid art direction you can rebuild
+          with a Three.js mesh, GridHelper, LineSegments, or shader material in src/main.js.
+        - drawGeodesicTrail() is the mood target for a future projectile/geodesic path trail.
+          Later, feed it positions from your real trajectory simulation instead of this placeholder curve.
+        - The HUD colors and panel styles can be moved into src/style.css once you decide
+          which parts of this direction belong in the actual game.
+      */
+
+      const canvas = document.querySelector("#labCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const palette = {
+        bg: "#0A0A0F",
+        bgSoft: "#0D1117",
+        grid: "#6FE7FF",
+        teal: "#3AA6B9",
+        orange: "#FF9E4A",
+        magenta: "#D16BFF",
+        lavender: "#C8B6FF",
+        ink: "#ECFBFF",
+      };
+
+      const state = {
+        width: 0,
+        height: 0,
+        dpr: 1,
+        time: 0,
+        lastTime: 0,
+        curvature: 0.68,
+        particleDensity: 0.72,
+        pointerX: 0.5,
+        pointerY: 0.5,
+        grid: true,
+        trail: true,
+        fog: true,
+        bloom: true,
+      };
+
+      const readouts = {
+        phase: document.querySelector("#phaseReadout"),
+        signal: document.querySelector("#signalReadout"),
+        field: document.querySelector("#fieldReadout"),
+        curve: document.querySelector("#curveReadout"),
+        drift: document.querySelector("#driftReadout"),
+        fog: document.querySelector("#fogReadout"),
+        curveValue: document.querySelector("#curveControlValue"),
+        particleValue: document.querySelector("#particleControlValue"),
+        trail: document.querySelector("#trailReadout"),
+        pulse: document.querySelector("#pulseReadout"),
+        glowMeter: document.querySelector("#glowMeter"),
+        glow: document.querySelector("#glowReadout"),
+        driftMeter: document.querySelector("#driftMeter"),
+        driftMeterText: document.querySelector("#driftMeterReadout"),
+      };
+
+      const curveControl = document.querySelector("#curveControl");
+      const particleControl = document.querySelector("#particleControl");
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const starParticles = Array.from({ length: 260 }, (_, index) => ({
+        x: seededRandom(index + 11),
+        y: seededRandom(index + 29),
+        z: seededRandom(index + 47),
+        size: 0.45 + seededRandom(index + 67) * 1.65,
+        speed: 0.08 + seededRandom(index + 83) * 0.22,
+        tone: seededRandom(index + 101),
+      }));
+
+      const fogBands = Array.from({ length: 5 }, (_, index) => ({
+        seed: seededRandom(index + 211),
+        offset: seededRandom(index + 311),
+        height: 0.18 + seededRandom(index + 411) * 0.26,
+      }));
+
+      function seededRandom(seed) {
+        const x = Math.sin(seed * 999.17) * 10000;
+        return x - Math.floor(x);
+      }
+
+      function hexToRgba(hex, alpha) {
+        const value = hex.replace("#", "");
+        const r = parseInt(value.slice(0, 2), 16);
+        const g = parseInt(value.slice(2, 4), 16);
+        const b = parseInt(value.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = rect.width;
+        state.height = rect.height;
+        canvas.width = Math.floor(rect.width * state.dpr);
+        canvas.height = Math.floor(rect.height * state.dpr);
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      }
+
+      function setupControls() {
+        curveControl.addEventListener("input", (event) => {
+          state.curvature = Number(event.target.value);
+          readouts.curveValue.textContent = `${Math.round(state.curvature * 100)}%`;
+        });
+
+        particleControl.addEventListener("input", (event) => {
+          state.particleDensity = Number(event.target.value);
+          readouts.particleValue.textContent = `${Math.round(state.particleDensity * 100)}%`;
+        });
+
+        document.querySelectorAll("[data-toggle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const key = button.dataset.toggle;
+            state[key] = !state[key];
+            button.classList.toggle("is-active", state[key]);
+            button.setAttribute("aria-pressed", String(state[key]));
+          });
+        });
+
+        window.addEventListener("pointermove", (event) => {
+          state.pointerX = event.clientX / Math.max(1, state.width);
+          state.pointerY = event.clientY / Math.max(1, state.height);
+        });
+      }
+
+      function drawBackground() {
+        const { width: w, height: h, time: t } = state;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = palette.bg;
+        ctx.fillRect(0, 0, w, h);
+
+        const wash = ctx.createLinearGradient(0, 0, w, h);
+        wash.addColorStop(0, "rgba(13, 17, 23, 0.98)");
+        wash.addColorStop(0.45, "rgba(10, 10, 15, 0.94)");
+        wash.addColorStop(1, "rgba(5, 7, 12, 1)");
+        ctx.fillStyle = wash;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+
+        const centerGlow = ctx.createRadialGradient(
+          w * (0.5 + (state.pointerX - 0.5) * 0.04),
+          h * 0.58,
+          20,
+          w * 0.5,
+          h * 0.58,
+          Math.max(w, h) * 0.66
+        );
+        centerGlow.addColorStop(0, "rgba(111, 231, 255, 0.11)");
+        centerGlow.addColorStop(0.34, "rgba(209, 107, 255, 0.06)");
+        centerGlow.addColorStop(1, "rgba(10, 10, 15, 0)");
+        ctx.fillStyle = centerGlow;
+        ctx.fillRect(0, 0, w, h);
+
+        const warmHaze = ctx.createRadialGradient(
+          w * 0.64,
+          h * 0.5 + Math.sin(t * 0.18) * 18,
+          30,
+          w * 0.64,
+          h * 0.5,
+          Math.max(w, h) * 0.44
+        );
+        warmHaze.addColorStop(0, "rgba(255, 158, 74, 0.075)");
+        warmHaze.addColorStop(0.42, "rgba(209, 107, 255, 0.045)");
+        warmHaze.addColorStop(1, "rgba(255, 158, 74, 0)");
+        ctx.fillStyle = warmHaze;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
+      function drawStars() {
+        const { width: w, height: h, time: t, particleDensity } = state;
+        const count = Math.floor(starParticles.length * particleDensity);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+
+        for (let i = 0; i < count; i += 1) {
+          const p = starParticles[i];
+          const driftX = Math.sin(t * p.speed + p.z * 7) * 10;
+          const driftY = Math.cos(t * p.speed * 0.7 + p.x * 8) * 7;
+          const parallax = (p.z - 0.5) * 34;
+          const x = (p.x * w + driftX + (state.pointerX - 0.5) * parallax + w) % w;
+          const y = (p.y * h * 0.78 + driftY + (state.pointerY - 0.5) * parallax + h) % h;
+          const twinkle = 0.35 + Math.sin(t * (0.9 + p.speed) + p.x * 18) * 0.28;
+          const alpha = Math.max(0.08, twinkle) * (0.35 + p.z * 0.7);
+          const color =
+            p.tone > 0.78 ? palette.magenta : p.tone > 0.54 ? palette.lavender : palette.grid;
+
+          ctx.beginPath();
+          ctx.fillStyle = hexToRgba(color, alpha);
+          ctx.shadowColor = color;
+          ctx.shadowBlur = state.bloom ? 10 : 0;
+          ctx.arc(x, y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function drawFog() {
+        if (!state.fog) return;
+
+        const { width: w, height: h, time: t } = state;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.filter = "blur(18px)";
+
+        fogBands.forEach((band, index) => {
+          const y = h * (0.42 + band.height) + Math.sin(t * 0.16 + band.seed * 8) * 28;
+          const bandHeight = h * (0.14 + band.offset * 0.08);
+          const alpha = 0.035 + index * 0.008;
+
+          ctx.beginPath();
+          ctx.moveTo(-w * 0.12, y);
+          ctx.bezierCurveTo(
+            w * 0.18,
+            y - 46 - band.seed * 30,
+            w * 0.58,
+            y + 48 + band.offset * 32,
+            w * 1.12,
+            y - 18
+          );
+          ctx.lineTo(w * 1.12, y + bandHeight);
+          ctx.bezierCurveTo(
+            w * 0.68,
+            y + bandHeight + 42,
+            w * 0.18,
+            y + bandHeight - 24,
+            -w * 0.12,
+            y + bandHeight + 18
+          );
+          ctx.closePath();
+          ctx.fillStyle = `rgba(200, 182, 255, ${alpha})`;
+          ctx.fill();
+        });
+
+        ctx.filter = "none";
+        ctx.restore();
+      }
+
+      function projectGrid(x, z) {
+        const { width: w, height: h, time: t } = state;
+        const horizon = h * (w < 720 ? 0.43 : 0.45);
+        const floorHeight = h * 0.63;
+        const depth = Math.max(0, Math.min(1, z / 30));
+        const vanishingX = w * (0.51 + (state.pointerX - 0.5) * 0.035);
+        const baseY = horizon + Math.pow(depth, 0.72) * floorHeight;
+        const spread = w * (0.022 + (1 - depth) * 0.046);
+        const massX = 1.8 + Math.sin(t * 0.22) * 0.45;
+        const massZ = 10.4 + Math.cos(t * 0.18) * 0.5;
+        const dx = x - massX;
+        const dz = z - massZ;
+        const well = Math.exp(-(dx * dx) / 24 - (dz * dz) / 36) * state.curvature;
+        const ripple = Math.sin(x * 1.08 + z * 0.62 - t * 1.2) * 6 * well;
+
+        return {
+          x: vanishingX + x * spread,
+          y: baseY + well * 88 + ripple,
+          alpha: Math.max(0.1, 1 - depth * 0.72),
+          depth,
+          well,
+        };
+      }
+
+      function strokePathWithGlow(path, color, alpha, lineWidth) {
+        ctx.save();
+        ctx.globalCompositeOperation = state.bloom ? "screen" : "source-over";
+
+        if (state.bloom) {
+          ctx.strokeStyle = hexToRgba(color, alpha * 0.28);
+          ctx.lineWidth = lineWidth + 8;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 18;
+          ctx.stroke(path);
+        }
+
+        ctx.strokeStyle = hexToRgba(color, alpha);
+        ctx.lineWidth = lineWidth;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = state.bloom ? 8 : 0;
+        ctx.stroke(path);
+        ctx.restore();
+      }
+
+      function drawSpacetimeGrid() {
+        if (!state.grid) return;
+
+        // Later in src/main.js: replace these 2D paths with a Three.js field surface
+        // or glowing line mesh that follows the same cyan/teal palette.
+        const horizontalLines = [];
+        const verticalLines = [];
+
+        for (let z = 2; z <= 30; z += 1.4) {
+          const path = new Path2D();
+          for (let i = 0; i <= 90; i += 1) {
+            const x = -16 + (i / 90) * 32;
+            const p = projectGrid(x, z);
+            if (i === 0) path.moveTo(p.x, p.y);
+            else path.lineTo(p.x, p.y);
+          }
+          horizontalLines.push({ path, alpha: 0.12 + (1 - z / 30) * 0.22 });
+        }
+
+        for (let x = -16; x <= 16; x += 2) {
+          const path = new Path2D();
+          for (let i = 0; i <= 90; i += 1) {
+            const z = 2 + (i / 90) * 28;
+            const p = projectGrid(x, z);
+            if (i === 0) path.moveTo(p.x, p.y);
+            else path.lineTo(p.x, p.y);
+          }
+          verticalLines.push({ path, alpha: 0.11 + (1 - Math.abs(x) / 18) * 0.16 });
+        }
+
+        horizontalLines.forEach((line, index) => {
+          const color = index % 4 === 0 ? palette.grid : palette.teal;
+          strokePathWithGlow(line.path, color, line.alpha, index % 4 === 0 ? 1.25 : 0.75);
+        });
+
+        verticalLines.forEach((line, index) => {
+          const color = index % 4 === 0 ? palette.grid : palette.teal;
+          strokePathWithGlow(line.path, color, line.alpha, index % 4 === 0 ? 1.2 : 0.7);
+        });
+      }
+
+      function drawLensCore() {
+        const core = projectGrid(1.8 + Math.sin(state.time * 0.22) * 0.45, 10.4);
+        const pulse = 0.5 + Math.sin(state.time * 1.8) * 0.5;
+        const radius = 18 + state.curvature * 22;
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.translate(core.x, core.y);
+        ctx.scale(1.7, 0.62);
+
+        for (let i = 0; i < 4; i += 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = hexToRgba(i % 2 ? palette.magenta : palette.orange, 0.18 - i * 0.025);
+          ctx.lineWidth = 1.4;
+          ctx.shadowColor = i % 2 ? palette.magenta : palette.orange;
+          ctx.shadowBlur = state.bloom ? 18 : 0;
+          ctx.arc(0, 0, radius + i * 15 + pulse * 7, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const glow = ctx.createRadialGradient(core.x, core.y, 2, core.x, core.y, radius * 1.7);
+        glow.addColorStop(0, "rgba(255, 158, 74, 0.72)");
+        glow.addColorStop(0.34, "rgba(209, 107, 255, 0.22)");
+        glow.addColorStop(1, "rgba(111, 231, 255, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(core.x, core.y, radius * 1.65, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function buildTrailPoints() {
+        const points = [];
+        for (let i = 0; i <= 150; i += 1) {
+          const p = i / 150;
+          const z = 2.2 + p * 25.5;
+          const bend = Math.sin(p * Math.PI * 1.8 + state.time * 0.34) * 1.15;
+          const lensPull = Math.exp(-Math.pow(p - 0.38, 2) / 0.012) * state.curvature * 3.2;
+          const x = -9.4 + p * 18.2 + bend - lensPull;
+          const projected = projectGrid(x, z);
+          projected.y -= Math.sin(p * Math.PI) * 28;
+          projected.phase = p;
+          points.push(projected);
+        }
+        return points;
+      }
+
+      function drawGeodesicTrail() {
+        if (!state.trail) return;
+
+        // Later in src/main.js: drive this trail from your real path samples.
+        // This placeholder keeps the art direction visible without touching gameplay.
+        const points = buildTrailPoints();
+        const path = new Path2D();
+
+        points.forEach((point, index) => {
+          if (index === 0) path.moveTo(point.x, point.y);
+          else path.lineTo(point.x, point.y);
+        });
+
+        const first = points[0];
+        const last = points[points.length - 1];
+        const gradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
+        gradient.addColorStop(0, "rgba(255, 158, 74, 0.18)");
+        gradient.addColorStop(0.45, "rgba(255, 158, 74, 0.88)");
+        gradient.addColorStop(0.74, "rgba(209, 107, 255, 0.82)");
+        gradient.addColorStop(1, "rgba(111, 231, 255, 0.5)");
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        if (state.bloom) {
+          ctx.strokeStyle = "rgba(255, 158, 74, 0.18)";
+          ctx.lineWidth = 16;
+          ctx.shadowColor = palette.orange;
+          ctx.shadowBlur = 24;
+          ctx.stroke(path);
+        }
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = palette.magenta;
+        ctx.shadowBlur = state.bloom ? 14 : 0;
+        ctx.stroke(path);
+
+        const pulseIndex = Math.floor(((state.time * 0.13) % 1) * (points.length - 1));
+        const pulse = points[pulseIndex];
+        const pulseRadius = 5 + Math.sin(state.time * 5) * 1.4;
+
+        ctx.fillStyle = hexToRgba(pulse.phase < 0.58 ? palette.orange : palette.magenta, 0.94);
+        ctx.shadowColor = pulse.phase < 0.58 ? palette.orange : palette.magenta;
+        ctx.shadowBlur = state.bloom ? 24 : 4;
+        ctx.beginPath();
+        ctx.arc(pulse.x, pulse.y, pulseRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let i = 18; i < points.length; i += 28) {
+          const node = points[i];
+          ctx.fillStyle = hexToRgba(palette.grid, 0.5);
+          ctx.shadowColor = palette.grid;
+          ctx.shadowBlur = state.bloom ? 14 : 0;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function drawWireCube(cx, cy, size, rotation, color) {
+        const half = size / 2;
+        const offset = size * 0.34;
+        const corners = [
+          [-half, -half],
+          [half, -half],
+          [half, half],
+          [-half, half],
+        ];
+
+        function rotate(point) {
+          const [x, y] = point;
+          const cos = Math.cos(rotation);
+          const sin = Math.sin(rotation);
+          return [x * cos - y * sin, x * sin + y * cos];
+        }
+
+        const front = corners.map((point) => {
+          const [x, y] = rotate(point);
+          return [cx + x, cy + y];
+        });
+        const back = corners.map((point) => {
+          const [x, y] = rotate(point);
+          return [cx + x + offset, cy + y - offset];
+        });
+
+        const path = new Path2D();
+        [front, back].forEach((face) => {
+          face.forEach(([x, y], index) => {
+            if (index === 0) path.moveTo(x, y);
+            else path.lineTo(x, y);
+          });
+          path.closePath();
+        });
+
+        for (let i = 0; i < 4; i += 1) {
+          path.moveTo(front[i][0], front[i][1]);
+          path.lineTo(back[i][0], back[i][1]);
+        }
+
+        strokePathWithGlow(path, color, 0.46, 1.2);
+      }
+
+      function drawWirePyramid(cx, cy, size, rotation) {
+        const points = [];
+        for (let i = 0; i < 3; i += 1) {
+          const angle = rotation + i * (Math.PI * 2) / 3;
+          points.push([cx + Math.cos(angle) * size, cy + Math.sin(angle) * size * 0.72]);
+        }
+
+        const apex = [cx + Math.cos(rotation + 0.6) * size * 0.35, cy - size * 1.25];
+        const path = new Path2D();
+        path.moveTo(points[0][0], points[0][1]);
+        path.lineTo(points[1][0], points[1][1]);
+        path.lineTo(points[2][0], points[2][1]);
+        path.closePath();
+
+        points.forEach((point) => {
+          path.moveTo(point[0], point[1]);
+          path.lineTo(apex[0], apex[1]);
+        });
+
+        strokePathWithGlow(path, palette.orange, 0.42, 1.1);
+      }
+
+      function drawPlaceholderGeometry() {
+        const { width: w, height: h, time: t } = state;
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+
+        drawWireCube(
+          w * 0.72 + Math.sin(t * 0.26) * 12,
+          h * 0.29 + Math.cos(t * 0.33) * 9,
+          Math.min(86, w * 0.095),
+          t * 0.22,
+          palette.magenta
+        );
+
+        drawWirePyramid(
+          w * 0.28 + Math.cos(t * 0.21) * 10,
+          h * 0.33 + Math.sin(t * 0.28) * 8,
+          Math.min(52, w * 0.06),
+          t * -0.28
+        );
+
+        ctx.restore();
+      }
+
+      function drawRetroOverlay() {
+        const { width: w, height: h, time: t } = state;
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.strokeStyle = "rgba(111, 231, 255, 0.08)";
+        ctx.lineWidth = 1;
+
+        const centerX = w * 0.5;
+        const centerY = h * 0.53;
+        const ringPulse = Math.sin(t * 0.8) * 8;
+        for (let i = 0; i < 3; i += 1) {
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY, 120 + i * 86 + ringPulse, 42 + i * 28, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function updateHud() {
+        const phase = (state.time % 100).toFixed(2).padStart(5, "0");
+        const pulse = 0.5 + Math.sin(state.time * 1.8) * 0.5;
+        const glow = Math.round((0.46 + pulse * 0.22 + state.curvature * 0.2) * 100);
+        const drift = Math.round((0.24 + state.particleDensity * 0.52 + Math.sin(state.time * 0.4) * 0.08) * 100);
+        const fogDensity = state.fog ? 0.24 + state.particleDensity * 0.42 : 0;
+
+        readouts.phase.textContent = phase;
+        readouts.signal.textContent = pulse > 0.58 ? "waking" : "steady";
+        readouts.field.textContent = `${state.curvature.toFixed(2)} c`;
+        readouts.curve.textContent = state.curvature.toFixed(2);
+        readouts.drift.textContent = state.particleDensity > 0.72 ? "active" : "calm";
+        readouts.fog.textContent = fogDensity.toFixed(2);
+        readouts.trail.textContent = pulse > 0.5 ? "magenta" : "orange";
+        readouts.pulse.textContent = pulse.toFixed(2);
+        readouts.glowMeter.style.width = `${Math.min(100, glow)}%`;
+        readouts.glow.textContent = `${Math.min(100, glow)}%`;
+        readouts.driftMeter.style.width = `${Math.min(100, drift)}%`;
+        readouts.driftMeterText.textContent = `${Math.min(100, drift)}%`;
+      }
+
+      function drawFrame(timestamp) {
+        if (!state.lastTime) state.lastTime = timestamp;
+        const delta = Math.min(0.05, (timestamp - state.lastTime) / 1000);
+        state.lastTime = timestamp;
+
+        if (!prefersReducedMotion) {
+          state.time += delta;
+        } else {
+          state.time += delta * 0.16;
+        }
+
+        drawBackground();
+        drawStars();
+        drawFog();
+        drawRetroOverlay();
+        drawSpacetimeGrid();
+        drawLensCore();
+        drawGeodesicTrail();
+        drawPlaceholderGeometry();
+        updateHud();
+
+        requestAnimationFrame(drawFrame);
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+      setupControls();
+      requestAnimationFrame(drawFrame);
+    </script>
+  </body>
+</html>
