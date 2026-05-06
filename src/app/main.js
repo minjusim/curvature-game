@@ -1248,7 +1248,7 @@ function getLeaderboardRequestUrl(action) {
 }
 
 function parseLeaderboardResponse(data) {
-  const rawPlays = Array.isArray(data) ? data : data?.plays;
+  const rawPlays = Array.isArray(data) ? data : data?.plays || data?.rankings || data?.records;
   if (!Array.isArray(rawPlays)) return [];
   return rawPlays.map(sanitizeSavedPlay).filter(Boolean).sort(compareSavedPlays).slice(0, MAX_VISIBLE_SAVED_PLAYS);
 }
@@ -1275,12 +1275,13 @@ async function postSharedSavedPlay(play) {
     headers: {
       "Content-Type": "text/plain;charset=utf-8",
     },
-    body: JSON.stringify({ action: "save", play }),
+    body: JSON.stringify({ action: "save", ...play }),
   });
   const data = await readLeaderboardJson(response);
+  const plays = parseLeaderboardResponse(data);
   return {
     play: sanitizeSavedPlay(data?.play) || sanitizeSavedPlay(play),
-    plays: parseLeaderboardResponse(data),
+    plays: plays.length > 0 ? plays : await fetchSharedSavedPlays(),
   };
 }
 
