@@ -2082,7 +2082,7 @@ const tutorialTypeSteps = [
   {
     bubbleSelector: ".tutorial-robot-note",
     target: () => ui.tutorialIntroText,
-    text: "Initializing spacetime system...\n\nNote:\nThis system operates on a simplified 2D metric.\nDesigned for intuition. Not for exact physics.\n\nProceed.",
+    text: "Initializing spacetime system...\n\nNote:\nThis system uses a simplified 2D potential field.\nDesigned for intuition. Not for exact physics.\n\nProceed.",
     speed: 29,
     delayAfter: 460,
   },
